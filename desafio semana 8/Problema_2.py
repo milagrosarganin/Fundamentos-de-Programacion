@@ -70,17 +70,16 @@ def actualizar_email(ruta, k, email_nuevo):
         archivo.seek(k * TAM_REGISTRO)            # volver a la posición del registro
         archivo.write(datos)                        # sobrescribe exactamente 92 bytes
 
+if __name__ == '__main__':
+    crear_agenda('agenda.bin', [
+        (1, 'Alice', '555-1234', 'alice@example.com'),
+        (2, 'Bob', '555-5678', 'bob@example.com'),
+        (3, 'Charlie', '555-9012', 'charlie@example.com'),
+        (4, 'David', '555-3456', 'david@example.com'),
+    ])
 
-crear_agenda('agenda.bin', [
-    (1, 'Alice', '555-1234', 'alice@example.com'),
-    (2, 'Bob', '555-5678', 'bob@example.com'),
-    (3, 'Charlie', '555-9012', 'charlie@example.com'),
-    (4, 'David', '555-3456', 'david@example.com'),
-])
+    actualizar_email('agenda.bin', 1, 'bob.new@example.com')
 
-actualizar_email('agenda.bin', 1, 'bob.new@example.com')
-
-with open('agenda.bin', 'rb') as archivo:
-    for k in range(4):
-        print(leer_contacto(archivo, k))   
-
+    with open('agenda.bin', 'rb') as archivo:
+        for k in range(4):
+            print(leer_contacto(archivo, k))

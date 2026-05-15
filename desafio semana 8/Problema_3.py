@@ -96,21 +96,6 @@ def binario_a_json_indentado(ruta_binaria, ruta_json):
     with open(ruta_json, 'w', encoding='utf-8') as f_salida:
         json.dump(contactos, f_salida, indent=2, ensure_ascii=False)
 
-# --- Bloque de Prueba ---
-if __name__ == "__main__":
-    if os.path.exists("agenda.bin"):
-        binario_a_jsonl("agenda.bin", "agenda.jsonl")
-        print("Exportado a JSONL con éxito.")
-        
-        jsonl_a_binario("agenda.jsonl", "agenda_restaurada.bin")
-        print("Restaurado a binario con éxito.")
-        
-        binario_a_json_indentado("agenda.bin", "agenda_indent.json")
-        print("Exportado a JSON plano con indentación con éxito.")
-        
-        cantidad_example = procesar_streaming("agenda.jsonl", "example.com")
-        print(f"Contactos con dominio @example.com: {cantidad_example}")
-
 def mostrar_tabla_comparativa():
     tabla = Table(title="Comparación de Tamaños de Archivos")
     tabla.add_column("Formato", justify="left", style="cyan", no_wrap=True)
@@ -132,7 +117,23 @@ def mostrar_tabla_comparativa():
     console = Console()
     console.print(tabla)
 
-mostrar_tabla_comparativa()
+
+# --- Bloque de Prueba ---
+if __name__ == "__main__":
+    if os.path.exists("agenda.bin"):
+        binario_a_jsonl("agenda.bin", "agenda.jsonl")
+        print("Exportado a JSONL con éxito.")
+        
+        jsonl_a_binario("agenda.jsonl", "agenda_restaurada.bin")
+        print("Restaurado a binario con éxito.")
+        
+        binario_a_json_indentado("agenda.bin", "agenda_indent.json")
+        print("Exportado a JSON plano con indentación con éxito.")
+        
+        cantidad_example = procesar_streaming("agenda.jsonl", "example.com")
+        print(f"Contactos con dominio @example.com: {cantidad_example}")
+
+    mostrar_tabla_comparativa()
 
 
 

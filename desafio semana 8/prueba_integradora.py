@@ -6,20 +6,20 @@ from Problema_3 import (
     procesar_streaming, 
     binario_a_json_indentado
 )
-# Asumimos que agenda_binaria.py está en el repo como dice la consigna
-# y tiene una función agregar_contacto(ruta, id, nombre, telefono, email)
-from Problema_3 import crear_archivo, agregar_contacto
+from Problema_2 import crear_agenda
 
 def generar_agenda_prueba(ruta, cantidad):
     """Genera un archivo binario de prueba con datos sintéticos."""
-    crear_archivo(ruta)
+    contactos = []
     dominios = ["example.com", "fi.uba.ar", "gmail.com"]
     for i in range(cantidad):
         id_contacto = i + 1
         nombre = f"Contacto_{i:05d}"
         telefono = f"11-4000-{random.randint(1000, 9999)}"
         email = f"user{i:05d}@{random.choice(dominios)}"
-        agregar_contacto(ruta, id_contacto, nombre, telefono, email)
+        contactos.append((id_contacto, nombre, telefono, email))
+        
+    crear_agenda(ruta, contactos)
 
 if __name__ == "__main__":
     random.seed(42) # Requerido por la consigna
