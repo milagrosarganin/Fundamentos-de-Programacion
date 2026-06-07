@@ -225,9 +225,9 @@ def agregar_producto(indice):
         producto queda guardado en el archivo y el indice se actualiza;
         de lo contrario se informa el error sin modificar el estado.
     '''
-    print(LINEA)
+    print(LINEA) #diseño
     print("  AGREGAR PRODUCTO")
-    print(LINEA)
+    print(LINEA) #diseño
     codigo = input("  Codigo (hasta 10 caracteres): ").strip()[:10]
 
     if not codigo:
@@ -272,7 +272,7 @@ def registrar_entrada(indice):
     Postcondicion: El stock del producto aumenta en la cantidad indicada y
         queda un registro de tipo 'E' en ARCHIVO_MOVIMIENTOS.
     '''
-    print(LINEA)
+    print(LINEA) 
     print("  REGISTRAR ENTRADA DE MERCADERIA")
     print(LINEA)
     codigo       = input("  Codigo del producto:  ").strip()
