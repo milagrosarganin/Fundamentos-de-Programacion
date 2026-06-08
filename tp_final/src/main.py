@@ -16,6 +16,9 @@ import os
 
 # =============================================================================
 #  SECCION DECLARATIVA
+#  Constantes globales: fuente unica de verdad. Se declaran una sola vez y, de
+#  ser posible, se derivan unas de otras. No se declaran variables de trabajo
+#  en esta seccion: solo constantes.
 # =============================================================================
 
 TITULO = "Gestor de Inventario de un Deposito"
@@ -44,7 +47,7 @@ SEPARADOR = "=" * 62
 #  FUNCIONES AUXILIARES DE CODIFICACION
 # =============================================================================
 
-def _codificar(texto, longitud):
+def codificar(texto, longitud):
     '''
     Descripcion: Convierte una cadena a bytes de longitud fija, truncando si
         excede la longitud y rellenando con bytes nulos si es mas corta.
@@ -54,7 +57,7 @@ def _codificar(texto, longitud):
     return texto.encode("utf-8")[:longitud].ljust(longitud, b"\x00")
 
 
-def _decodificar(datos):
+def decodificar(datos):
     '''
     Descripcion: Convierte bytes a cadena eliminando el relleno de bytes nulos.
     Precondicion: datos es un objeto bytes.
@@ -63,7 +66,7 @@ def _decodificar(datos):
     return datos.decode("utf-8").rstrip("\x00").strip()
 
 
-def _es_flotante_valido(cadena):
+def es_flotante_valido(cadena):
     '''
     Descripcion: Verifica si una cadena representa un numero real no negativo
         sin recurrir a try/except.
@@ -119,7 +122,7 @@ def cargar_indice():
         dato = archivo.read(TAMANO_PRODUCTO)
         while dato:
             campos = struct.unpack(FORMATO_PRODUCTO, dato)
-            codigo = _decodificar(campos[0])
+            codigo = decodificar(campos[0])
             indice[codigo] = offset
             offset += TAMANO_PRODUCTO
             dato = archivo.read(TAMANO_PRODUCTO)
@@ -139,7 +142,7 @@ def leer_producto_en(offset):
         archivo.seek(offset)
         dato = archivo.read(TAMANO_PRODUCTO)
     campos = struct.unpack(FORMATO_PRODUCTO, dato)
-    return (_decodificar(campos[0]), _decodificar(campos[1]),
+    return (decodificar(campos[0]), decodificar(campos[1]),
             campos[2], campos[3], campos[4])
 
 
@@ -154,8 +157,8 @@ def escribir_producto_en(producto, offset):
     '''
     dato = struct.pack(
         FORMATO_PRODUCTO,
-        _codificar(producto[0], 10),
-        _codificar(producto[1], 50),
+        codificar(producto[0], 10),
+        codificar(producto[1], 50),
         producto[2],
         producto[3],
         producto[4]
@@ -176,8 +179,8 @@ def _agregar_producto_al_archivo(producto):
     '''
     dato = struct.pack(
         FORMATO_PRODUCTO,
-        _codificar(producto[0], 10),
-        _codificar(producto[1], 50),
+        codificar(producto[0], 10),
+        codificar(producto[1], 50),
         producto[2],
         producto[3],
         producto[4]
@@ -203,8 +206,8 @@ def guardar_movimiento(codigo, tipo, cantidad):
     '''
     dato = struct.pack(
         FORMATO_MOVIMIENTO,
-        _codificar(codigo, 10),
-        _codificar(tipo, 1),
+        codificar(codigo, 10),
+        codificar(tipo, 1),
         cantidad
     )
     with open(ARCHIVO_MOVIMIENTOS, "ab") as archivo:
@@ -248,7 +251,7 @@ def agregar_producto(indice):
     precio_str    = input("  Precio unitario:                   ").strip()
 
     enteros_validos = stock_str.isdigit() and stock_min_str.isdigit()
-    precio_valido   = _es_flotante_valido(precio_str)
+    precio_valido   = es_flotante_valido(precio_str)
 
     if not (enteros_validos and precio_valido):
         print("  Error: los valores numericos ingresados no son validos.")
@@ -398,8 +401,8 @@ def ver_historial(indice):
         dato = archivo.read(TAMANO_MOVIMIENTO)
         while dato:
             campos  = struct.unpack(FORMATO_MOVIMIENTO, dato)
-            cod_mov = _decodificar(campos[0])
-            tipo    = _decodificar(campos[1])
+            cod_mov = decodificar(campos[0])
+            tipo    = decodificar(campos[1])
             cant    = campos[2]
 
             if cod_mov == codigo:
@@ -560,7 +563,7 @@ def reporte_rotacion():
         dato = archivo.read(TAMANO_MOVIMIENTO)
         while dato:
             campos = struct.unpack(FORMATO_MOVIMIENTO, dato)
-            codigo = _decodificar(campos[0])
+            codigo = decodificar(campos[0])
             cant   = campos[2]
             if codigo in rotacion:
                 rotacion[codigo] += cant

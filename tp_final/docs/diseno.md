@@ -74,7 +74,7 @@ descomposición reparte el trabajo y reduce los conflictos de fusión.]
 
 | Función      | Subtarea que resuelve | A cargo de  |
 |--------------|-----------------------|-------------|
-| [completar]  | [completar]           | [completar] |
+| codificar  | [completar]           | [completar] |
 | [completar]  | [completar]           | [completar] |
 
 ### 2.4. Pseudocódigo
