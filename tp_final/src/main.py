@@ -168,7 +168,7 @@ def escribir_producto_en(producto, offset):
         archivo.write(dato)
 
 
-def _agregar_producto_al_archivo(producto):
+def agregar_producto_al_archivo(producto):
     '''
     Descripcion: Codifica y agrega un nuevo registro de producto al final
         del archivo binario.
@@ -258,7 +258,7 @@ def agregar_producto(indice):
         return
 
     producto = (codigo, descripcion, int(stock_str), int(stock_min_str), float(precio_str))
-    offset   = _agregar_producto_al_archivo(producto)
+    offset   = agregar_producto_al_archivo(producto)
     indice[codigo] = offset
     print(f"  Producto '{codigo}' agregado correctamente.")
 
@@ -353,7 +353,7 @@ def registrar_salida(indice):
 def alertas_reposicion(indice):
     '''
     Descripcion: Recorre el indice y muestra los productos cuyo stock es
-        estrictamente menor que su stock minimo.
+        estrictamente menor que su stock mínimo.
     Precondicion: indice es el diccionario {codigo: offset} actualizado.
     Postcondicion: Imprime por pantalla los productos a reponer; si todos
         superan su minimo informa que el stock esta en niveles optimos.

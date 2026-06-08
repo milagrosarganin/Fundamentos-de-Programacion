@@ -68,14 +68,30 @@ La elección de la estructura es una decisión de diseño que se evalúa.]
 
 ### 2.3. Descomposición modular
 
-[completar — en qué funciones se descompone el problema. Para cada función:
-nombre, qué subtarea resuelve, y qué integrante la tiene a cargo. Una buena
-descomposición reparte el trabajo y reduce los conflictos de fusión.]
-
 | Función      | Subtarea que resuelve | A cargo de  |
 |--------------|-----------------------|-------------|
-| codificar  | [completar]           | [completar] |
-| [completar]  | [completar]           | [completar] |
+| [codificar]  | [Vuelve una cadena a bytes de longitud fija]           | [Tomás Rodriguez] |
+| [decodificar]| [Convierte bytes a cadena eliminando bytes de relleno]           | [Milagros Argañin] |
+| [es_flotante_valido]  | [Verifica que una cadena sea un número real no negativo]           | [Tomás Rodriguez] |
+| [inicializar_archivos]  | [Crea el directorio y los archivos binarios si faltan]           | [Milagros Argañin] |
+| [cargar_indice]  | [Transforma el binario de productos en diccionario para acceder en O(1)]           | [Tomás Rodriguez] |
+| [leer_producto_en]  | [Busca el producto en el archivo binario por su "indice" y lo decodifica]           | [completar] |
+| [escribir_producto_en]  | [completar]           | [completar] |
+| [agregar_producto_al_archivo]  | [Se añade al archivo binario el producto añadido en la funcion agregar_producto]           | [completar] |
+| [guardar_movimiento]  | [Añade un registro de movimiento al final de binario de historial]           | [completar] |
+| [agregar_producto]  | [Se solicita la información para un nuevo producto y si es valido se lo añade al archivo binario a traves de la funcion agregar_producto_al_archivo]           | [completar] |
+| [registrar_entrada]  | [Incrementa en stock en el archivo binario y registra la entrada en el historial]           | [completar] |
+| [registrar_salida]  | [Si la salida es mayor que la cantidad se rechaza la salida sino se registra la salida]           | [completar] |
+| [alertas_reposicion]  | [Recorre los productos y dice cuales estan por debajo de su mínimo]           | [completar] |
+| [ver_historial]  | [Ver todos los movimientos de entrada y salidad de UN producto]           | [completar] |
+| [ordenamiento_insercion]  | [Ordena una lista de tuplas a traves del algoritmo de insercion]           | [completar] |
+| [listar_inventario]  | [Desde el archivo binario carga los productos ordenados segun un criterio dado]           | [completar] |
+| [valorizar_inventario]  | [Calcula cuanto vale el total del inventarío]           | [completar] |
+| [estadisticas_inventario]  | [Clasifica el stock dependiendo su cantidad entr normal, critico o sin existencia]           | [completar] |
+| [reporte_rotacion]  | [Lee el historial de movimientos y y genera un ranking de movimientos]           | [completar] |
+| [mostrar_menu]  | [Imprime el menu con todas las condiciones]           | [completar] |
+
+
 
 ### 2.4. Pseudocódigo
 
