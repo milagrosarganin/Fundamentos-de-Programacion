@@ -32,12 +32,48 @@ El proyecto no incluye interfaz gráfica (la interacción es por consola), ni ba
 
 ### 1.2. Datos de entrada
 
-[completar — qué datos recibe el programa, de qué tipo, con qué restricciones,
-y por qué medio (teclado, archivo, etc.).]
+En el caso de los datos Persistentes el programa los reibe de archivos Binarios, pero para el caso de las funciones el programa recibe datos interactivamente desde el teclado a través de un menú de consola. Los datos esperados según la operación son:
+
+**Agregar producto:**
+- Código de producto (cadena, máximo 10 caracteres, no puede estar vacío)
+- Descripción (cadena, máximo 50 caracteres, no puede estar vacía)
+- Stock inicial (entero no negativo)
+- Stock mínimo (entero no negativo)
+- Precio unitario (número decimal no negativo)
+
+**Registrar entrada o salida:**
+- Código del producto existente (cadena)
+- Cantidad (entero positivo > 0)
+
+**Ver historial:**
+- Código del producto (cadena)
+
+**Operaciones sin entrada adicional:**
+- Alertas de reposición, listado de inventario, valorización, estadísticas, reporte de rotación: se ejecutan sin parámetros adicionales (operan sobre el inventario cargado)
+
+Todas las entradas numéricas se validan antes de procesarse; aquellas que no cumplan con los requisitos generan un mensaje de error y se rechaza la operación.
+
 
 ### 1.3. Resultados esperados
 
-[completar — qué produce el programa y en qué forma se presenta.]
+El programa genera salidas por consola y persiste datos en archivos binarios:
+
+**Salidas por consola:**
+- Menú interactivo con opciones numeradas (0 a 9)
+- Mensajes de confirmación o error al ejecutar cada operación
+- Listados con formato de tabla (productos ordenados por descripción o stock)
+- Historial de movimientos (tipo, cantidad) de un producto específico
+- Alertas de productos bajo stock mínimo
+- Valor total del inventario
+- Estadísticas de stock (cantidad de productos en stock normal, crítico, sin existencias)
+- Ranking de productos por rotación (entrada/salida)
+
+**Persistencia en archivos binarios:**
+- `inventario.bin`: registros de productos (código, descripción, stock, stock mínimo, precio)
+- `movimientos.bin`: historial de entradas y salidas (código, tipo, cantidad)
+
+**Índice en memoria:**
+- Diccionario {código: offset} que se carga al iniciar y permite localizar productos en O(1)
 
 ### 1.4. Casos de análisis
 
@@ -47,9 +83,15 @@ y por qué medio (teclado, archivo, etc.).]
 
 | # | Tipo     | Entrada      | Salida esperada | Observaciones |
 |---|----------|--------------|-----------------|---------------|
-| 1 | Normal   | [completar]  | [completar]     | [completar]   |
-| 2 | Límite   | [completar]  | [completar]     | [completar]   |
-| 3 | Extremo  | [completar]  | [completar]     | [completar]   |
+| 1 | Normal   | Agregar producto: código="PROD001", descripción="Tornillos acero", stock=100, mínimo=20, precio=5.50 | Mensaje de confirmación: "Producto 'PROD001' agregado correctamente." El producto se persiste en inventario.bin y se actualiza el índice en memoria. | Caso típico de alta de producto con datos válidos y completos. Verifica persistencia binaria. |
+| 2 | Límite   | Registrar entrada: código="PROD001", cantidad=1 (cantidad mínima válida) | Stock de PROD001 aumenta de 100 a 101. Se registra movimiento 'E' en movimientos.bin. Mensaje: "Entrada registrada. Stock actualizado: 101 unidades." | Prueba el caso límite inferior de cantidad válida (> 0). Una entrada de 1 unidad debe procesarse sin rechazo. |
+| 3 | Extremo  | Registrar salida: código="PROD001", cantidad=150 (mayor que stock disponible de 101) | Mensaje de error: "Operacion rechazada: stock insuficiente (politica: RECHAZO). Stock disponible: 101 | Cantidad solicitada: 150". El stock no cambia, no se registra movimiento. | Verifica la política de rechazo ante salida que excede stock. El sistema rechaza la operación sin modificar archivos. |
+| 4 | Normal   | Alertas de reposición: inventario contiene productos donde stock < stock_mínimo | Muestra tabla de productos por debajo del mínimo con código, descripción, stock actual y stock mínimo. Ejemplo: "PROD002 | Tuercas | Stock: 8 | Minimo: 15" | Caso de flujo normal: al menos un producto requiere reposición. Verifica detección e impresión del listado de alertas. |
+| 5 | Límite   | Ver historial: código="PROD001" que tiene exactamente 2 movimientos (1 entrada + 1 salida) | Tabla con 2 filas: "1 | Entrada | 100" y "2 | Salida | 50". Mensaje de encabezado confirma el código solicitado. | Prueba historial con mínima cantidad de movimientos registrados. Verifica que solo se muestren movimientos del producto buscado. |
+| 6 | Extremo  | Ver historial: código="NOEXISTE" que no existe en el inventario | Mensaje de error: "Error: no existe un producto con el codigo 'NOEXISTE'." | Verifica validación: código inexistente rechaza la consulta sin procesar el historial. |
+| 7 | Normal   | Valorización del inventario: 3 productos con stock y precios variados (ej: PROD001 stock=101 precio=5.50, PROD002 stock=50 precio=2.00, PROD003 stock=20 precio=10.00) | Tabla detallada con valor por producto (cantidad × precio) y suma total: "Valor total del inventario: $ 755.50" (101×5.50 + 50×2.00 + 20×10.00 = 555.50 + 100 + 200 = 855.50) | Verifica acumulador con patrón multiplicativo. Suma correcta de valorización parcial y total. |
+| 8 | Límite   | Estadísticas del inventario: inventario con productos distribuidos en 3 estados (normal, crítico, sin stock) | Resumen: "Productos con stock optimo: 2 | Productos en nivel critico: 1 | Productos sin existencias: 0 | Total de productos: 3" | Frontera entre categorías: stock==mínimo (normal), stock<mínimo (crítico), stock==0 (sin existencias). |
+| 9 | Extremo  | Listar inventario ordenado: inventario vacío (sin productos) | Mensaje: "El inventario esta vacio." Sin impresión de tabla. | Caso extremo: operación sobre colección vacía. Verifica control de flujo y evita errores de acceso. |
 
 ---
 
