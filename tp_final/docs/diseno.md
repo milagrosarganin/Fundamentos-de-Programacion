@@ -57,14 +57,18 @@ y por qué medio (teclado, archivo, etc.).]
 
 ### 2.1. Estrategia general
 
-[completar — qué enfoque se eligió para resolver el problema y por qué.
-¿Iterativo, recursivo, divide y vencerás, backtracking? Justificar la elección.]
+Se eligió un enfoque **iterativo y modular**. El programa gira en torno a un bucle de menú principal que delega cada operación a una función especializada. No se usa recursión porque el problema no tiene estructura recursiva natural (no hay árboles ni backtracking). El principio "divide y vencerás" se aplica a nivel arquitectónico: cada operación del sistema queda encapsulada en su propia función, lo que reduce la complejidad de cada unidad y facilita el reparto del trabajo entre los integrantes.
+
+La decisión central del diseño es mantener un **índice en memoria** (diccionario código → posición en el archivo) que se carga al inicio del programa. Esto separa la responsabilidad de búsqueda rápida (O(1) con el diccionario) de la responsabilidad de persistencia (archivo binario de registros fijos). Para el listado ordenado, los registros se vuelcan a una lista en memoria y se ordenan con el algoritmo propio del equipo, ya que el volumen de un depósito real cabe en RAM y no justifica una estrategia externa.
 
 ### 2.2. Estructuras de datos
 
-[completar — qué estructuras de datos se usan (listas, tuplas, diccionarios,
-conjuntos, archivos) y por qué cada una es la adecuada para lo que representa.
-La elección de la estructura es una decisión de diseño que se evalúa.]
+| Estructura | Rol en el sistema | Justificación |
+|---|---|---|
+| Archivo binario de registros fijos (`inventario.bin`) | Persistencia de productos (código, descripción, stock, stock mínimo, precio) | Los registros de longitud fija permiten acceso aleatorio por offset: conocida la posición, la lectura/escritura es O(1) sin recorrer el archivo completo. |
+| Diccionario en memoria `{codigo: offset}` | Índice para localizar un producto por código | Cumple el requisito explícito del enunciado: búsqueda O(1). Se reconstruye al iniciar el programa y se actualiza en cada alta. |
+| Archivo binario de registros fijos (`historial.bin`) | Historial de movimientos de entrada y salida | Append secuencial natural para un log de auditoría; el formato binario fijo permite escaneo eficiente al consultar el historial de un producto. |
+| Lista temporal de tuplas | Ordenamiento e impresión del inventario | Se carga desde el archivo solo para mostrar el listado ordenado; no se persiste. Permite aplicar el algoritmo de ordenamiento del equipo sobre datos en memoria. |
 
 ### 2.3. Descomposición modular
 
