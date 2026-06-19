@@ -211,3 +211,182 @@ exactamente al inicio del registro que querés leer.
 *Análisis crítico:* El error era exactamente el que describió: tell() después de read() da la posición siguiente. La corrección es mínima (mover una línea antes del read) y resuelve el problema completamente. Se aplicó directamente al código.
 
 *Aprendizaje:* El orden de tell() y read() importa, porque si necesitás la posición de lo que estás por leer, siempre capturá tell() antes del read(). Es un error fácil de no ver porque la lógica "parece" correcta al leerla.
+
+---
+
+### Entrada 4 — 2026-06-18 — [integrante]
+
+**Contexto:** Semana 15 — modularización. El equipo decidió dividir el único archivo `main.py` en cuatro módulos: `config.py`, `archivos.py`, `operaciones.py` y `main.py`. Antes de empezar a mover código, se quiso validar que la cadena de dependencias elegida era correcta y no iba a generar problemas de importación.
+
+**Herramienta utilizada:** Claude (claude.ai)
+
+**Prompt exacto:**
+
+```
+Vamos a dividir nuestro proyecto en cuatro módulos Python. Pensamos esta
+cadena de dependencias:
+
+  config.py      → no importa nada del proyecto
+  archivos.py    → importa config
+  operaciones.py → importa config y archivos
+  main.py        → importa config, archivos y operaciones
+
+¿Esta estructura tiene algún problema? ¿Las dependencias van en la
+dirección correcta?
+```
+
+**Respuesta obtenida:**
+
+```
+La estructura es correcta y no tiene ningún problema. Las dependencias van
+en una sola dirección (de arriba hacia abajo), lo cual evita el mayor
+problema de los sistemas modulares: las importaciones circulares.
+
+Una importación circular ocurre cuando el módulo A importa a B y B importa
+a A. Python no puede resolver eso porque para cargar A necesita cargar B,
+pero para cargar B necesita cargar A. El resultado es un ImportError.
+
+En su cadena eso no puede pasar: config no importa a nadie, archivos solo
+mira hacia config, operaciones mira hacia abajo (config y archivos), y main
+mira a todos. Ninguno mira hacia arriba.
+
+Un detalle práctico: para que Python encuentre los módulos cuando ejecutás
+main.py, todos los archivos tienen que estar en la misma carpeta (src/ en
+su caso). Si ejecutás desde otra carpeta, el intérprete no va a encontrar
+config.py y va a tirar ModuleNotFoundError. Siempre ejecutá con:
+
+    python3 src/main.py
+
+desde la raíz del proyecto, o bien:
+
+    cd src
+    python3 main.py
+```
+
+**Análisis crítico:** La respuesta confirmó que la arquitectura era correcta. El aviso sobre el directorio de ejecución era nuevo para el equipo y resultó ser exactamente el problema que apareció en la entrada siguiente. Se incorporó al flujo de trabajo ejecutar siempre desde la raíz con `python3 src/main.py`.
+
+**Aprendizaje:** Las importaciones circulares son el error más común al modularizar. La regla para evitarlas es simple: las dependencias siempre deben ir en una sola dirección, de los módulos más generales (config) a los más específicos (main).
+
+---
+
+### Entrada 5 — 2026-06-18 — [integrante]
+
+**Contexto:** Semana 15 — primera ejecución después de dividir el código en módulos. Al correr el programa apareció un error que no entendíamos porque el código en sí no había cambiado, solo lo habíamos separado en archivos distintos.
+
+**Herramienta utilizada:** Claude (claude.ai)
+
+**Prompt exacto:**
+
+```
+Separamos el código en cuatro archivos dentro de la carpeta src/:
+config.py, archivos.py, operaciones.py y main.py. Cuando corremos el
+programa desde la carpeta tp_final/ con "python3 src/main.py" sale este
+error:
+
+  File "src/main.py", line 3, in <module>
+    from config import TITULO, SEPARADOR
+ModuleNotFoundError: No module named 'config'
+
+El archivo config.py existe, está en src/. No entendemos por qué no
+lo encuentra si está en la misma carpeta que main.py.
+```
+
+**Respuesta obtenida:**
+
+```
+El problema es cómo Python busca módulos cuando ejecutás un script.
+
+Cuando corrés "python3 src/main.py", Python agrega al path de búsqueda
+la carpeta donde está el script, que en este caso es src/. Entonces
+debería encontrar config.py sin problema.
+
+Pero hay un detalle: si en algún momento corriste el programa parado
+dentro de src/ y después te moviste, o si tenés algún __pycache__ de
+una ejecución anterior desde otro directorio, puede quedar una caché
+inconsistente.
+
+Probá estas dos cosas en orden:
+
+1. Borrá los directorios __pycache__ que haya dentro de src/:
+      find src/ -name __pycache__ -type d
+      rm -rf src/__pycache__
+
+2. Ejecutá siempre parado en la raíz del proyecto (tp_final/):
+      python3 src/main.py
+
+Si el error persiste, verificá que el archivo se llama exactamente
+"config.py" (sin mayúsculas, sin espacios) con:
+      ls src/
+
+Python distingue mayúsculas de minúsculas en los nombres de archivo,
+incluso en Windows en algunos casos.
+```
+
+**Análisis crítico:** El problema era la caché `__pycache__` de una ejecución previa desde el directorio equivocado. Después de borrarla y ejecutar desde la raíz con `python3 src/main.py` el error desapareció. La respuesta fue precisa y la solución funcionó al primer intento.
+
+**Aprendizaje:** Al modularizar, el directorio desde el que se ejecuta el programa importa. Los `__pycache__` de ejecuciones anteriores pueden generar errores confusos si se corrió el programa desde distintos directorios. La práctica correcta es ejecutar siempre desde la raíz del proyecto.
+
+---
+
+### Entrada 6 — 2026-06-18 — [integrante]
+
+**Contexto:** Semana 15 — revisión del código de `reporte_rotacion` después de moverlo a `operaciones.py`. Se notó que la función tenía su propio bucle de ordenamiento (idéntico en lógica al de `ordenamiento_insercion`) en vez de llamar a esa función. Se quiso verificar si la refactorización propuesta era correcta antes de tocar el código.
+
+**Herramienta utilizada:** Claude (claude.ai)
+
+**Prompt exacto:**
+
+```
+La función reporte_rotacion tiene este bloque de ordenamiento propio:
+
+    pares = list(rotacion.items())
+    i = 1
+    while i < len(pares):
+        actual = pares[i]
+        j = i - 1
+        while j >= 0 and pares[j][1] < actual[1]:
+            pares[j + 1] = pares[j]
+            j -= 1
+        pares[j + 1] = actual
+        i += 1
+
+Ya tenemos ordenamiento_insercion(lista, clave) en el mismo módulo.
+Queremos reemplazar ese bloque por:
+
+    pares = ordenamiento_insercion(
+        [(cod, tot) for cod, tot in rotacion.items()], 1
+    )
+    pares.reverse()
+
+¿La lógica es equivalente? ¿El resultado va a ser el mismo?
+```
+
+**Respuesta obtenida:**
+
+```
+La lógica es equivalente con un matiz importante que hay que verificar.
+
+El bloque original ordena de mayor a menor (descendente) porque la
+condición de comparación es pares[j][1] < actual[1]: mueve elementos
+hacia la derecha cuando el actual es MAYOR que el de la izquierda.
+
+ordenamiento_insercion ordena de menor a mayor (ascendente) porque la
+condición es ordenada[j][clave] > actual[clave]: mueve elementos cuando
+el de la izquierda es MAYOR que el actual.
+
+Tu propuesta compensa eso con .reverse() al final, lo que invierte la
+lista ya ordenada de menor a mayor a mayor a menor. Eso es correcto.
+
+El resultado final es idéntico: ranking de productos de mayor a menor
+volumen de movimientos.
+
+Una ventaja adicional de tu refactorización: elimina código duplicado.
+Si en el futuro cambian la implementación de ordenamiento_insercion
+(por ejemplo, para agregar estabilidad o cambiar el algoritmo), el
+reporte de rotación se actualiza automáticamente sin tener que tocar
+su propio bloque.
+```
+
+**Análisis crítico:** La respuesta confirmó que la equivalencia era correcta y explicó por qué el `.reverse()` era necesario (la dirección del ordenamiento original era descendente, no ascendente). Se aplicó la refactorización. Se descartó la sugerencia de agregar un parámetro `descendente=True` a `ordenamiento_insercion` porque añadía complejidad innecesaria para un caso puntual.
+
+**Aprendizaje:** Antes de refactorizar código de ordenamiento hay que prestar atención a la dirección (ascendente vs. descendente) porque los dos bucles pueden verse casi idénticos pero producir resultados invertidos. El `.reverse()` explícito hace visible esa intención.
