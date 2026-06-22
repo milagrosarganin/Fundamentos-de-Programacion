@@ -62,17 +62,22 @@ def inicializar_archivos():
     Postcondicion: El directorio data/ existe y ambos archivos binarios
         estan presentes (pueden estar vacios).
     '''
-    _dir_datos = os.path.dirname(ARCHIVO_PRODUCTOS)
-    if not os.path.exists(_dir_datos):
-        os.makedirs(_dir_datos)
+    try:
+        _dir_datos = os.path.dirname(ARCHIVO_PRODUCTOS)
+        if not os.path.exists(_dir_datos):
+            os.makedirs(_dir_datos)
 
-    if not os.path.exists(ARCHIVO_PRODUCTOS):
-        with open(ARCHIVO_PRODUCTOS, "wb") as _archivo:
-            pass
+        if not os.path.exists(ARCHIVO_PRODUCTOS):
+            with open(ARCHIVO_PRODUCTOS, "wb") as _archivo:
+                pass
 
-    if not os.path.exists(ARCHIVO_MOVIMIENTOS):
-        with open(ARCHIVO_MOVIMIENTOS, "wb") as _archivo:
-            pass
+        if not os.path.exists(ARCHIVO_MOVIMIENTOS):
+            with open(ARCHIVO_MOVIMIENTOS, "wb") as _archivo:
+                pass
+
+    except OSError as e:
+        print(f"  Error al inicializar los archivos del sistema: {e}")
+        print("  Verifique los permisos de la carpeta data/.")
 
 
 # =============================================================================
@@ -86,18 +91,24 @@ def cargar_indice():
         localizar cualquier registro en tiempo O(1).
     Precondicion: ARCHIVO_PRODUCTOS existe (puede estar vacio).
     Postcondicion: Retorna un diccionario con los codigos de producto como
-        claves y los desplazamientos en bytes como valores.
+        claves y los desplazamientos en bytes como valores. Si ocurre un
+        error de lectura retorna un diccionario vacio.
     '''
     indice = {}
     offset = 0
-    with open(ARCHIVO_PRODUCTOS, "rb") as archivo:
-        dato = archivo.read(TAMANO_PRODUCTO)
-        while dato:
-            campos = struct.unpack(FORMATO_PRODUCTO, dato)
-            codigo = decodificar(campos[0])
-            indice[codigo] = offset
-            offset += TAMANO_PRODUCTO
+    try:
+        with open(ARCHIVO_PRODUCTOS, "rb") as archivo:
             dato = archivo.read(TAMANO_PRODUCTO)
+            while dato:
+                campos = struct.unpack(FORMATO_PRODUCTO, dato)
+                codigo = decodificar(campos[0])
+                indice[codigo] = offset
+                offset += TAMANO_PRODUCTO
+                dato = archivo.read(TAMANO_PRODUCTO)
+    except OSError as e:
+        print(f"  Error al leer el archivo de productos: {e}")
+    except struct.error as e:
+        print(f"  Error: el archivo de productos contiene datos corruptos: {e}")
     return indice
 
 
@@ -108,14 +119,20 @@ def leer_producto_en(offset):
     Precondicion: offset es un multiplo no negativo de TAMANO_PRODUCTO;
         el archivo tiene datos en esa posicion.
     Postcondicion: Retorna una tupla (codigo, descripcion, stock, minimo,
-        precio) con todos los campos decodificados.
+        precio) con todos los campos decodificados, o None si ocurre un error.
     '''
-    with open(ARCHIVO_PRODUCTOS, "rb") as archivo:
-        archivo.seek(offset)
-        dato = archivo.read(TAMANO_PRODUCTO)
-    campos = struct.unpack(FORMATO_PRODUCTO, dato)
-    return (decodificar(campos[0]), decodificar(campos[1]),
-            campos[2], campos[3], campos[4])
+    try:
+        with open(ARCHIVO_PRODUCTOS, "rb") as archivo:
+            archivo.seek(offset)
+            dato = archivo.read(TAMANO_PRODUCTO)
+        campos = struct.unpack(FORMATO_PRODUCTO, dato)
+        return (decodificar(campos[0]), decodificar(campos[1]),
+                campos[2], campos[3], campos[4])
+    except OSError as e:
+        print(f"  Error al leer el archivo de productos: {e}")
+    except struct.error as e:
+        print(f"  Error: registro corrupto en offset {offset}: {e}")
+    return None
 
 
 def escribir_producto_en(producto, offset):
@@ -125,19 +142,24 @@ def escribir_producto_en(producto, offset):
     Precondicion: producto es (codigo, descripcion, stock, minimo, precio);
         offset es un multiplo no negativo de TAMANO_PRODUCTO; el archivo existe.
     Postcondicion: El registro queda actualizado en la posicion offset del
-        archivo binario de productos.
+        archivo binario de productos. Si ocurre un error informa al usuario.
     '''
-    dato = struct.pack(
-        FORMATO_PRODUCTO,
-        codificar(producto[0], 10),
-        codificar(producto[1], 50),
-        producto[2],
-        producto[3],
-        producto[4]
-    )
-    with open(ARCHIVO_PRODUCTOS, "r+b") as archivo:
-        archivo.seek(offset)
-        archivo.write(dato)
+    try:
+        dato = struct.pack(
+            FORMATO_PRODUCTO,
+            codificar(producto[0], 10),
+            codificar(producto[1], 50),
+            producto[2],
+            producto[3],
+            producto[4]
+        )
+        with open(ARCHIVO_PRODUCTOS, "r+b") as archivo:
+            archivo.seek(offset)
+            archivo.write(dato)
+    except OSError as e:
+        print(f"  Error al escribir en el archivo de productos: {e}")
+    except struct.error as e:
+        print(f"  Error al codificar el registro del producto: {e}")
 
 
 def agregar_producto_al_archivo(producto):
@@ -147,20 +169,26 @@ def agregar_producto_al_archivo(producto):
     Precondicion: producto es (codigo, descripcion, stock, minimo, precio);
         el archivo ARCHIVO_PRODUCTOS existe.
     Postcondicion: El registro queda escrito al final del archivo; retorna
-        el offset donde comienza ese registro.
+        el offset donde comienza ese registro, o -1 si ocurre un error.
     '''
-    dato = struct.pack(
-        FORMATO_PRODUCTO,
-        codificar(producto[0], 10),
-        codificar(producto[1], 50),
-        producto[2],
-        producto[3],
-        producto[4]
-    )
-    offset = os.path.getsize(ARCHIVO_PRODUCTOS)
-    with open(ARCHIVO_PRODUCTOS, "ab") as archivo:
-        archivo.write(dato)
-    return offset
+    try:
+        dato = struct.pack(
+            FORMATO_PRODUCTO,
+            codificar(producto[0], 10),
+            codificar(producto[1], 50),
+            producto[2],
+            producto[3],
+            producto[4]
+        )
+        offset = os.path.getsize(ARCHIVO_PRODUCTOS)
+        with open(ARCHIVO_PRODUCTOS, "ab") as archivo:
+            archivo.write(dato)
+        return offset
+    except OSError as e:
+        print(f"  Error al guardar el producto en el archivo: {e}")
+    except struct.error as e:
+        print(f"  Error al codificar el producto: {e}")
+    return -1
 
 
 # =============================================================================
@@ -174,13 +202,18 @@ def guardar_movimiento(codigo, tipo, cantidad):
     Precondicion: codigo tiene hasta 10 caracteres; tipo es 'E' o 'S';
         cantidad es un entero positivo.
     Postcondicion: El movimiento queda persistido al final de
-        ARCHIVO_MOVIMIENTOS como efecto secundario de escritura en disco.
+        ARCHIVO_MOVIMIENTOS. Si ocurre un error informa al usuario.
     '''
-    dato = struct.pack(
-        FORMATO_MOVIMIENTO,
-        codificar(codigo, 10),
-        codificar(tipo, 1),
-        cantidad
-    )
-    with open(ARCHIVO_MOVIMIENTOS, "ab") as archivo:
-        archivo.write(dato)
+    try:
+        dato = struct.pack(
+            FORMATO_MOVIMIENTO,
+            codificar(codigo, 10),
+            codificar(tipo, 1),
+            cantidad
+        )
+        with open(ARCHIVO_MOVIMIENTOS, "ab") as archivo:
+            archivo.write(dato)
+    except OSError as e:
+        print(f"  Advertencia: no se pudo guardar el movimiento en el historial: {e}")
+    except struct.error as e:
+        print(f"  Advertencia: error al codificar el movimiento: {e}")

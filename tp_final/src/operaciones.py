@@ -90,6 +90,9 @@ def agregar_producto(indice):
 
     producto = (codigo, descripcion, int(stock_str), int(stock_min_str), float(precio_str))
     offset   = agregar_producto_al_archivo(producto)
+    if offset == -1:
+        print("  Error: no se pudo guardar el producto.")
+        return
     indice[codigo] = offset
     print(f"  Producto '{codigo}' agregado correctamente.")
 
@@ -121,9 +124,12 @@ def registrar_entrada(indice):
         print(f"  Error: no existe un producto con el codigo '{codigo}'.")
         return
 
-    cantidad    = int(cantidad_str)
-    offset      = indice[codigo]
-    producto    = leer_producto_en(offset)
+    cantidad = int(cantidad_str)
+    offset   = indice[codigo]
+    producto = leer_producto_en(offset)
+    if producto is None:
+        print("  Error: no se pudo leer el producto del archivo.")
+        return
     nuevo_stock = producto[2] + cantidad
     actualizado = (producto[0], producto[1], nuevo_stock, producto[3], producto[4])
 
@@ -160,6 +166,9 @@ def registrar_salida(indice):
     cantidad = int(cantidad_str)
     offset   = indice[codigo]
     producto = leer_producto_en(offset)
+    if producto is None:
+        print("  Error: no se pudo leer el producto del archivo.")
+        return
 
     if producto[2] < cantidad:
         print("  Operacion rechazada: stock insuficiente (politica: RECHAZO).")
@@ -195,6 +204,8 @@ def alertas_reposicion(indice):
     contador = 0
     for codigo in indice:
         producto = leer_producto_en(indice[codigo])
+        if producto is None:
+            continue
         if producto[2] < producto[3]:
             print(f"  {producto[0]:<12} | {producto[1]:<32} "
                   f"| Stock: {producto[2]:>6} | Minimo: {producto[3]:>6}")
@@ -228,21 +239,28 @@ def ver_historial(indice):
     print(f"  {'N':>4}  {'Tipo':<10}  {'Cantidad':>10}")
     print(f"  {'-' * 30}")
 
-    with open(ARCHIVO_MOVIMIENTOS, "rb") as archivo:
-        dato = archivo.read(TAMANO_MOVIMIENTO)
-        while dato:
-            campos  = struct.unpack(FORMATO_MOVIMIENTO, dato)
-            cod_mov = decodificar(campos[0])
-            tipo    = decodificar(campos[1])
-            cant    = campos[2]
-
-            if cod_mov == codigo:
-                tipo_texto = "Entrada" if tipo == "E" else "Salida"
-                print(f"  {numero:>4}  {tipo_texto:<10}  {cant:>10}")
-                encontrado = True
-                numero    += 1
-
+    try:
+        with open(ARCHIVO_MOVIMIENTOS, "rb") as archivo:
             dato = archivo.read(TAMANO_MOVIMIENTO)
+            while dato:
+                campos  = struct.unpack(FORMATO_MOVIMIENTO, dato)
+                cod_mov = decodificar(campos[0])
+                tipo    = decodificar(campos[1])
+                cant    = campos[2]
+
+                if cod_mov == codigo:
+                    tipo_texto = "Entrada" if tipo == "E" else "Salida"
+                    print(f"  {numero:>4}  {tipo_texto:<10}  {cant:>10}")
+                    encontrado = True
+                    numero    += 1
+
+                dato = archivo.read(TAMANO_MOVIMIENTO)
+    except OSError as e:
+        print(f"  Error al leer el historial de movimientos: {e}")
+        return
+    except struct.error as e:
+        print(f"  Error: el historial contiene datos corruptos: {e}")
+        return
 
     if not encontrado:
         print("  No se encontraron movimientos para este producto.")
@@ -278,7 +296,9 @@ def listar_inventario(indice):
 
     productos = []
     for codigo in indice:
-        productos.append(leer_producto_en(indice[codigo]))
+        producto = leer_producto_en(indice[codigo])
+        if producto is not None:
+            productos.append(producto)
 
     clave    = 1 if criterio == "1" else 2
     ordenados = ordenamiento_insercion(productos, clave)
@@ -313,7 +333,9 @@ def valorizar_inventario(indice):
     print(f"  {LINEA}")
 
     for codigo in indice:
-        p            = leer_producto_en(indice[codigo])
+        p = leer_producto_en(indice[codigo])
+        if p is None:
+            continue
         valor_item   = p[2] * p[4]
         valor_total += valor_item
         print(f"  {p[0]:<12} {p[1]:<30} {p[2]:>7} {p[4]:>10.2f} {valor_item:>12.2f}")
@@ -338,6 +360,8 @@ def estadisticas_inventario(indice):
 
     for codigo in indice:
         p = leer_producto_en(indice[codigo])
+        if p is None:
+            continue
         if p[2] == 0:
             estado["sin_stock"] += 1
         elif p[2] < p[3]:
@@ -364,17 +388,24 @@ def reporte_rotacion():
     print(LINEA)
 
     rotacion = {}
-    with open(ARCHIVO_MOVIMIENTOS, "rb") as archivo:
-        dato = archivo.read(TAMANO_MOVIMIENTO)
-        while dato:
-            campos = struct.unpack(FORMATO_MOVIMIENTO, dato)
-            codigo = decodificar(campos[0])
-            cant   = campos[2]
-            if codigo in rotacion:
-                rotacion[codigo] += cant
-            else:
-                rotacion[codigo] = cant
+    try:
+        with open(ARCHIVO_MOVIMIENTOS, "rb") as archivo:
             dato = archivo.read(TAMANO_MOVIMIENTO)
+            while dato:
+                campos = struct.unpack(FORMATO_MOVIMIENTO, dato)
+                codigo = decodificar(campos[0])
+                cant   = campos[2]
+                if codigo in rotacion:
+                    rotacion[codigo] += cant
+                else:
+                    rotacion[codigo] = cant
+                dato = archivo.read(TAMANO_MOVIMIENTO)
+    except OSError as e:
+        print(f"  Error al leer el historial de movimientos: {e}")
+        return
+    except struct.error as e:
+        print(f"  Error: el historial contiene datos corruptos: {e}")
+        return
 
     if not rotacion:
         print("  No hay movimientos registrados aun.")
